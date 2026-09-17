@@ -1,23 +1,11 @@
 # 学习神经网络
+我的最终目标，是学会LLM的推理引擎
+这是一个用来打基础的项目：从一个最简单的神经网络开始，一步一步学到Transformer模型
+最简单的神经网络 -> 解决XOR问题
+全连接 -> 识别mnist（让我惊讶的是效果居然还挺好）
+CNN -> 识别mnist
+Encorder-Decorder（代码没找回来，但是其实很简单） -> 压缩图片
+Seq2Seq -> 中英文翻译（短句还行，长句不太行了）
+Transformer -> 中英文翻译（我当时没有GPU，没法做很大的训练，长句也不太行）
 
-## 学习路径
-1. 学习神经网络基础 - 全连接、CNN和变种、RNN和变种
-2. 学习序列模型 - seq2seq、transformer，完成翻译任务
-3. 把手写的transformer模型改造成LLM模型（还未完成）
-4. 为这个LLM模型实现一个简单的推理引擎
-5. 优化这个推理引擎，支持主流模型（比如Qwen 0.6B）
-
-## Quick Start
-环境准备：
-```bash
-uv sync
-```
-
-执行模型
-```bash
-# 跑seq2seq模型
-uv run seq2seq
-
-# 跑transformer模型（还未完成）
-uv run timformer
-```
+除此之外，一些底层基础的学习，也会放到这个项目，比如CUDA、算子、优化器编写等
