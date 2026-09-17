@@ -1,0 +1,75 @@
+import torch
+from torch import nn
+
+from learn_nn.a_4_seq2seq.dataset.get_tatoeba import EOS_IDX, SOS_IDX
+from learn_nn.a_5_transformer.input_layer import TransformerEncoder
+from learn_nn.a_5_transformer.output_layer import TransformerDecoder
+
+
+class TimTransformer(nn.Module):
+    def __init__(self, src_vocab, tgt_vocab):
+        super().__init__()
+        self.encoder = TransformerEncoder(src_vocab, tgt_vocab)
+        self.decoder = TransformerDecoder(src_vocab, tgt_vocab)
+    
+
+    def _teaching_force(self, tgt_input, encoder_output, src_padding_mask):
+        logits = self.decoder(tgt_input, encoder_output, encoder_output, src_padding_mask=src_padding_mask)
+        return logits
+
+    def _self_generation(self, input_token, encoder_output, src_padding_mask):
+        logits = []
+        _max_length = 50
+        while True:
+            decoder_output = self.decoder(
+                input_token, encoder_output, encoder_output, src_padding_mask=src_padding_mask
+            )
+            next_logit = decoder_output[:, -1:, :]  # [B, T, V] -> [B, 1, V]
+            logits.append(next_logit)
+            # 取最后一步的 token 并追加到 input_token 末尾
+            next_token = torch.argmax(next_logit, dim=-1)  # [1, B]
+            input_token = torch.cat([input_token, next_token], dim=1)
+            # 所有 batch 都生成了 EOS 则停止
+            if next_token.eq(EOS_IDX).all():
+                break
+            if len(logits) >= _max_length:
+                break
+        logits = torch.cat(logits, dim=1)  # list[B,1,V] -> [B, T_gen, V]
+        return logits
+
+    def forward(self, src, tgt_input=None):
+        encoder_output, src_padding_mask = self.encoder(src)
+        
+        logits = None
+        if tgt_input is not None:
+            logits = self._teaching_force(tgt_input, encoder_output, src_padding_mask)
+        else:
+            batch_size = src.size(0)
+            input_token = torch.full(
+                (batch_size, 1),
+                fill_value=SOS_IDX,
+                dtype=torch.long,
+            )            
+            logits = self._self_generation(input_token, encoder_output, src_padding_mask)
+            
+        return logits
+
+
+
+# 这个是一个多月前的实现，代码整理一下，不打算继续训练了
+# 到这里位置，就从神经元，一路学习到transformer模型
+# 这里，有一些基础没有来得及巩固，未来要慢慢学，比如说
+# 1. 手推求导、反向传播的数学公式，卷积和RNN都没推
+# 2. 手写优化器，比如Adam, SGD, RMSProp等
+# 3. 手写cuda算子，后面会慢慢补
+
+# Todo: 翻译任务还是很有意思的，回头可以回来尝试一下Bert的部分
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    print(f'model module: {__package__}')
